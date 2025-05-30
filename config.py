@@ -1,0 +1,4 @@
+SECRET_KEY = "secretkey123"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+UPLOAD_DIR = "uploaded_files"

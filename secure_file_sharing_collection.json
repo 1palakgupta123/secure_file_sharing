@@ -1,0 +1,142 @@
+{
+  "info": {
+    "name": "Secure File Sharing API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Client Signup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"client@example.com\", \"password\": \"securepassword\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/auth/signup",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "auth",
+            "signup"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ops User Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"ops@example.com\", \"password\": \"securepassword\"}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/auth/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Upload File (Ops User)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{ops_token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "sample.docx"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8000/ops/upload",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "ops",
+            "upload"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Secure Download URL (Client User)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{client_token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/client/download/12345",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "client",
+            "download",
+            "12345"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Download File (Secure Link)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:8000/client/download-secure/{{secure_token}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "client",
+            "download-secure",
+            "{{secure_token}}"
+          ]
+        }
+      }
+    }
+  ]
+}

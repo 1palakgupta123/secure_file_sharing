@@ -1,0 +1,71 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Secure File Share - Login</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+</head>
+<body class="container mt-5">
+  <h2>Login / Sign Up</h2>
+
+  <div class="mb-3">
+    <label>Email:</label>
+    <input type="email" id="email" class="form-control" />
+  </div>
+  <div class="mb-3">
+    <label>Password:</label>
+    <input type="password" id="password" class="form-control" />
+  </div>
+  <div class="mb-3">
+    <label>Role:</label>
+    <select id="role" class="form-select">
+      <option value="client">Client</option>
+      <option value="ops">Ops</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" onclick="signup()">Sign Up</button>
+  <button class="btn btn-success" onclick="login()">Login</button>
+
+  <script>
+    async function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      const res = await fetch("http://localhost:8000/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role }),
+      });
+
+      const data = await res.json();
+      alert(data.msg || data.detail || "Signup done");
+    }
+
+    async function login() {
+      const formData = new URLSearchParams();
+      formData.append("username", document.getElementById("email").value);
+      formData.append("password", document.getElementById("password").value);
+
+      const res = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", document.getElementById("role").value);
+        if (document.getElementById("role").value === "client") {
+          window.location.href = "client.html";
+        } else {
+          window.location.href = "ops.html";
+        }
+      } else {
+        alert(data.detail || "Login failed");
+      }
+    }
+  </script>
+</body>
+</html>
