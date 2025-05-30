@@ -1,18 +1,58 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from models import User, Token
-from database import users_db
-from utils import create_access_token, verify_token
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
+import json
+import os
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+from config import SECRET_KEY, ALGORITHM
+
 router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+USER_DB_FILE = "users_db.json"
+
+
+class User(BaseModel):
+    email: EmailStr
+    password: str
+    role: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+def load_users():
+    if os.path.exists(USER_DB_FILE):
+        with open(USER_DB_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_users(data):
+    with open(USER_DB_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=1)):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_token(token: str) -> Optional[dict]:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
 
 @router.post("/signup")
 def signup(user: User):
-    if user.email in users_db:
+    users = load_users()
+    if user.email in users:
         raise HTTPException(status_code=400, detail="Email already registered")
-    # Save user with password key (no hashing for now)
-    users_db[user.email] = user.dict()
+    users[user.email] = user.dict()
+    save_users(users)
     token = create_access_token({"sub": user.email, "role": user.role})
     verify_link = f"http://localhost:8080/auth/verify?token={token}"
     return {"msg": "Signup successful", "verify_url": verify_link}
@@ -26,19 +66,22 @@ def verify_email(token: str):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = users_db.get(form_data.username)
+    users = load_users()
+    user = users.get(form_data.username)
     if not user or user["password"] != form_data.password:
         raise HTTPException(status_code=400, detail="Invalid credentials")
-    access_token = create_access_token({"sub": user["email"], "role": user["role"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+    token = create_access_token({"sub": user["email"], "role": user["role"]})
+    return {"access_token": token, "token_type": "bearer"}
 
+# Dependency to get current user
 def get_current_user(token: str = Depends(oauth2_scheme)):
     payload = verify_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid token")
     email = payload.get("sub")
-    if email not in users_db:
+    users = load_users()
+    if email not in users:
         raise HTTPException(status_code=401, detail="User not found")
-    user = users_db[email]
-    user["email"] = email  
+    user = users[email]
+    user["email"] = email
     return user
